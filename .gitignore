@@ -4,3 +4,6 @@
 
 /convert-line-ending/bin
 /convert-line-ending/obj
+/packages
+/.vs
+*.user
