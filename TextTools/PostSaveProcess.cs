@@ -42,8 +42,8 @@ namespace TextTools
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-    [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
-    [ProvideOptionPage(typeof(OptionPageGrid), "convert-line-ending", "My Grid Page", 0, 0, true)]
+    [ProvideAutoLoad(UIContextGuids.SolutionExists)]
+    [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "PostSave", 0, 0, true)]
     [Guid(PostSaveProcess.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class PostSaveProcess : Package
@@ -51,7 +51,7 @@ namespace TextTools
         /// <summary>
         /// VSPackage1 GUID string.
         /// </summary>
-        public const string PackageGuidString = "9f2d6689-46fe-4abe-94c4-78a3fe42afd8";
+        public const string PackageGuidString = "9e8bcae7-59c5-4c30-8925-4674d7f073c9";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PostSaveProcess"/> class.
@@ -69,7 +69,7 @@ namespace TextTools
 
         private DocumentEvents documentEvents;
 
-        private bool OptionCRLF
+        private OptionPageGrid.EnumCRLF OptionCRLF
         {
             get
             {
@@ -95,10 +95,12 @@ namespace TextTools
         {
             Debug.WriteLine("Initialize");
             base.Initialize();
+            //AddNextOccurCommand.Initialize(this);
 
             var dte = GetService(typeof(DTE)) as DTE2;
             documentEvents = dte.Events.DocumentEvents;
             documentEvents.DocumentSaved += OnDocumentSaved;
+
 
         }
 
@@ -118,16 +120,30 @@ namespace TextTools
             stream.Close();
 
             var encoding = new UTF8Encoding(OptionBOM, false);
-            if (OptionCRLF)
+            switch (OptionCRLF)
             {
-                text = text.Replace("\r\n", "\n");
-                text = text.Replace("\n", "\r\n");
-                Debug.WriteLine("Convert to CRLF");
-            }
-            else
-            {
-                text = text.Replace("\r\n", "\n");
-                Debug.WriteLine("Convert to LF");
+                case OptionPageGrid.EnumCRLF.CRLF:
+                    text = ConvertToCRLF(text);
+                    break;
+                case OptionPageGrid.EnumCRLF.LF:
+                    text = ConvertToLF(text);
+                    break;
+                case OptionPageGrid.EnumCRLF.Smart:
+                    var crln = text.Length - text.Replace("\r\n", "\n").Length;
+                    var ln = text.Split('\n').Length - 1 - crln;
+
+                    if (crln > ln)
+                    {
+                        text = ConvertToCRLF(text);
+                    }
+                    else
+                    {
+                        text = ConvertToLF(text);
+                    }
+
+                    break;
+                default:
+                    break;
             }
             var bytes = encoding.GetBytes(text);
 
@@ -136,14 +152,36 @@ namespace TextTools
             Debug.WriteLine("Convert to UTF-8");
         }
 
+        private static string ConvertToLF(string text)
+        {
+            text = text.Replace("\r\n", "\n");
+            Debug.WriteLine("Convert to LF");
+            return text;
+        }
+
+        private static string ConvertToCRLF(string text)
+        {
+            text = text.Replace("\r\n", "\n");
+            text = text.Replace("\n", "\r\n");
+            Debug.WriteLine("Convert to CRLF");
+            return text;
+        }
+
         class OptionPageGrid : DialogPage
         {
-            private bool optionCrLf = false;
+            public enum EnumCRLF
+            {
+                Keep,
+                CRLF,
+                LF,
+                Smart,
+            }
+            private EnumCRLF optionCrLf = 0;
 
-            [Category("convert-line-ending")]
+            [Category("TextTools")]
             [DisplayName("convert to crlf")]
-            [Description("convert to \\r\\n if true, convert to \\n if false")]
-            public bool OptionCRLF
+            [Description("0: keep line ending. |1: convert to \\r\\n.|2: convert to \\n. |3: smart line ending(less changes)")]
+            public EnumCRLF OptionCRLF
             {
                 get { return optionCrLf; }
                 set { optionCrLf = value; }
@@ -151,7 +189,7 @@ namespace TextTools
 
             private bool optionBOM = false;
 
-            [Category("convert-line-ending")]
+            [Category("TextTools")]
             [DisplayName("add BOM")]
             [Description("Whether add BOM to file")]
             public bool OptionBOM

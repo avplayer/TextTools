@@ -3,7 +3,7 @@ using System.Windows.Input;
 using Microsoft.VisualStudio.Text.Editor;
 using System.Diagnostics;
 
-namespace TestTools
+namespace TextTools
 {
 
     internal class MultiEditMouseProcessor : IMouseProcessor

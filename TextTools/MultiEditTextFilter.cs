@@ -14,7 +14,7 @@ using EnvDTE80;
 using System.Windows;
 using System.Linq;
 
-namespace TestTools
+namespace TextTools
 {
 
     internal class MultiEditTextFilter : IOleCommandTarget

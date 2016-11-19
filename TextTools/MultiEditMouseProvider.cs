@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 
-namespace TestTools
+namespace TextTools
 {
     
     [Export(typeof(IMouseProcessorProvider))]
