@@ -112,6 +112,7 @@ namespace TextTools
                         case ((uint)VSConstants.VSStd2KCmdID.PAGEDN):
                         case ((uint)VSConstants.VSStd2KCmdID.PAGEUP):
                         case ((uint)VSConstants.VSStd2KCmdID.PASTE):
+                        case ((uint)VSConstants.VSStd2KCmdID.COPY):
                         case ((uint)VSConstants.VSStd2KCmdID.PASTEASHTML):
                         case ((uint)VSConstants.VSStd2KCmdID.BOL):
                         case ((uint)VSConstants.VSStd2KCmdID.EOL):
@@ -160,6 +161,12 @@ namespace TextTools
                         break;
                     case ((uint)VSConstants.VSStd2KCmdID.PASTE):
                         return Paste(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                    case ((uint)VSConstants.VSStd2KCmdID.COPY):
+                        if(points.Count > 0)
+                        {
+                            return Copy(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -179,6 +186,12 @@ namespace TextTools
                             return Paste(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
                         }
                         break;
+                    case VSConstants.VSStd97CmdID.Copy:
+                        if (points.Count > 0)
+                        {
+                            return Copy(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -186,6 +199,13 @@ namespace TextTools
 
 
             return NextTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
+
+        private int Copy(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
+        {
+            var text = String.Join("\n", points.ConvertAll((t) => t.IsSelection ? t.Span.GetSpan(textView.TextSnapshot).GetText(): ""));
+            Clipboard.SetText(text);
+            return 0;
         }
 
         private int Paste(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
