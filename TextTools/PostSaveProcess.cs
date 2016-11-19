@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright file="VSPackage1.cs" company="Company">
 //     Copyright (c) Company.  All rights reserved.
 // </copyright>
@@ -17,12 +17,11 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.Win32;
 using EnvDTE;
 using EnvDTE80;
-using System.Windows.Forms;
 using System.IO;
 using System.Text;
 using System.ComponentModel;
- 
-namespace convert_line_ending
+
+namespace TextTools
 {
     /// <summary>
     /// This is the class that implements the package exposed by this assembly.
@@ -45,9 +44,9 @@ namespace convert_line_ending
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     [ProvideOptionPage(typeof(OptionPageGrid), "convert-line-ending", "My Grid Page", 0, 0, true)]
-    [Guid(VSPackage1.PackageGuidString)]
+    [Guid(PostSaveProcess.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-    public sealed class VSPackage1 : Package
+    public sealed class PostSaveProcess : Package
     {
         /// <summary>
         /// VSPackage1 GUID string.
@@ -55,9 +54,9 @@ namespace convert_line_ending
         public const string PackageGuidString = "9f2d6689-46fe-4abe-94c4-78a3fe42afd8";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VSPackage1"/> class.
+        /// Initializes a new instance of the <see cref="PostSaveProcess"/> class.
         /// </summary>
-        public VSPackage1()
+        public PostSaveProcess()
         {
             // Inside this method you can place any initialization code that does not require
             // any Visual Studio service because at this point the package object is created but
@@ -100,11 +99,12 @@ namespace convert_line_ending
             var dte = GetService(typeof(DTE)) as DTE2;
             documentEvents = dte.Events.DocumentEvents;
             documentEvents.DocumentSaved += OnDocumentSaved;
+
         }
 
         void OnDocumentSaved(Document doc)
         {
-            if(doc.Kind != "{8E7B96A8-E33D-11D0-A6D5-00C04FB67F6A}")
+            if (doc.Kind != "{8E7B96A8-E33D-11D0-A6D5-00C04FB67F6A}")
             {
                 return;
             }
@@ -116,9 +116,9 @@ namespace convert_line_ending
             var reader = new StreamReader(stream, Encoding.Default);
             text = reader.ReadToEnd();
             stream.Close();
-             
+
             var encoding = new UTF8Encoding(OptionBOM, false);
-            if(OptionCRLF)
+            if (OptionCRLF)
             {
                 text = text.Replace("\r\n", "\n");
                 text = text.Replace("\n", "\r\n");
@@ -162,5 +162,5 @@ namespace convert_line_ending
         }
         #endregion
     }
-    
+
 }
