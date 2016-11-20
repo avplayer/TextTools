@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // <copyright file="VSPackage1.cs" company="Company">
 //     Copyright (c) Company.  All rights reserved.
 // </copyright>
@@ -51,7 +51,7 @@ namespace TextTools
         /// <summary>
         /// VSPackage1 GUID string.
         /// </summary>
-        public const string PackageGuidString = "9e8bcae7-59c5-4c30-8925-4674d7f073c9";
+        public const string PackageGuidString = "624A1C84-1E89-4FC9-8863-4FF2242FFB2B";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PostSaveProcess"/> class.
@@ -115,8 +115,16 @@ namespace TextTools
 
             string text;
             stream.Position = 0;
-            var reader = new StreamReader(stream, Encoding.Default);
-            text = reader.ReadToEnd();
+            try
+            {
+                var reader = new StreamReader(stream, new UTF8Encoding(false, true));
+                text = reader.ReadToEnd();
+            }
+            catch(DecoderFallbackException)
+            {
+                var reader = new StreamReader(stream, Encoding.Default);
+                text = reader.ReadToEnd();
+            }
             stream.Close();
 
             var encoding = new UTF8Encoding(OptionBOM, false);
@@ -145,9 +153,11 @@ namespace TextTools
                 default:
                     break;
             }
-            var bytes = encoding.GetBytes(text);
-
-            File.WriteAllBytes(path, bytes);
+            stream = File.Open(path, FileMode.Truncate | FileMode.OpenOrCreate);
+            var writer = new BinaryWriter(stream);
+            writer.Write(encoding.GetPreamble());
+            writer.Write(encoding.GetBytes(text));
+            writer.Close();
 
             Debug.WriteLine("Convert to UTF-8");
         }

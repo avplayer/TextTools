@@ -118,6 +118,10 @@ namespace TextTools
                         case ((uint)VSConstants.VSStd2KCmdID.EOL):
                         case ((uint)VSConstants.VSStd2KCmdID.RETURN):
                         case ((uint)VSConstants.VSStd2KCmdID.BACKTAB):
+                        case ((uint)VSConstants.VSStd2KCmdID.WORDPREV_EXT):
+                        case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT_EXT):
+                        case ((uint)VSConstants.VSStd2KCmdID.WORDPREV):
+                        case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT):
                             prgCmds[i].cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
                             return VSConstants.S_OK;
                     }
@@ -154,6 +158,10 @@ namespace TextTools
                     case ((uint)VSConstants.VSStd2KCmdID.RIGHT_EXT):
                     case ((uint)VSConstants.VSStd2KCmdID.UP_EXT):
                     case ((uint)VSConstants.VSStd2KCmdID.DOWN_EXT):
+                    case ((uint)VSConstants.VSStd2KCmdID.WORDPREV_EXT):
+                    case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT_EXT):
+                    case ((uint)VSConstants.VSStd2KCmdID.WORDPREV):
+                    case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT):
                         if (points.Count > 0)
                         {
                             return SyncedOperation(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
