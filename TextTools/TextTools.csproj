@@ -57,6 +57,11 @@
     <Compile Include="MultiEditTextProvider.cs" />
     <Compile Include="PostSaveProcess.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QuoteItCommand.cs" />
+    <Compile Include="RemoveWhiteSpace.cs" />
+    <Compile Include="RemoveWhitespaceCommand.cs" />
+    <Compile Include="RemoveWhitespaceOnSave.cs" />
+    <Compile Include="CommandProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />

@@ -54,6 +54,8 @@ namespace TextTools
         /// </summary>
         public const string PackageGuidString = "624A1C84-1E89-4FC9-8863-4FF2242FFB2B";
 
+        internal static OptionPageGrid Options { get; set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PostSaveProcess"/> class.
         /// </summary>
@@ -70,32 +72,6 @@ namespace TextTools
 
         private DocumentEvents documentEvents;
 
-        private OptionPageGrid.EnumCRLF OptionCRLF
-        {
-            get
-            {
-                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
-                return page.OptionCRLF;
-            }
-        }
-
-        private bool OptionBOM
-        {
-            get
-            {
-                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
-                return page.OptionBOM;
-            }
-        }
-        private bool OptionRemoveTrailingWhiteSpace
-        {
-            get
-            {
-                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
-                return page.OptionRemoveTrailingWhiteSpace;
-            }
-        }
-
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -110,7 +86,7 @@ namespace TextTools
             documentEvents = dte.Events.DocumentEvents;
             documentEvents.DocumentSaved += OnDocumentSaved;
 
-
+            Options = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
         }
 
         void OnDocumentSaved(Document doc)
@@ -136,14 +112,8 @@ namespace TextTools
             }
             stream.Close();
 
-            if (OptionRemoveTrailingWhiteSpace)
-            {
-                var re = new Regex(@"\s*$");
-                text = re.Replace(text, "");
-            }
-
-            var encoding = new UTF8Encoding(OptionBOM, false);
-            switch (OptionCRLF)
+            var encoding = new UTF8Encoding(Options.OptionBOM, false);
+            switch (Options.OptionCRLF)
             {
                 case OptionPageGrid.EnumCRLF.CRLF:
                     text = ConvertToCRLF(text);
@@ -192,7 +162,7 @@ namespace TextTools
             return text;
         }
 
-        class OptionPageGrid : DialogPage
+        internal class OptionPageGrid : DialogPage
         {
             public enum EnumCRLF
             {
