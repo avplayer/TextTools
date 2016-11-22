@@ -19,6 +19,7 @@ using EnvDTE;
 using EnvDTE80;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.ComponentModel;
 
 namespace TextTools
@@ -86,6 +87,14 @@ namespace TextTools
                 return page.OptionBOM;
             }
         }
+        private bool OptionRemoveTrailingWhiteSpace
+        {
+            get
+            {
+                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+                return page.OptionRemoveTrailingWhiteSpace;
+            }
+        }
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -126,6 +135,12 @@ namespace TextTools
                 text = reader.ReadToEnd();
             }
             stream.Close();
+
+            if (OptionRemoveTrailingWhiteSpace)
+            {
+                var re = new Regex(@"\s*$");
+                text = re.Replace(text, "");
+            }
 
             var encoding = new UTF8Encoding(OptionBOM, false);
             switch (OptionCRLF)
@@ -206,6 +221,17 @@ namespace TextTools
             {
                 get { return optionBOM; }
                 set { optionBOM = value; }
+            }
+
+            bool optionRemoveTrailingWhiteSpace = false;
+
+            [Category("TextTools")]
+            [DisplayName("remove trailing white spaces")]
+            [Description("Whether remove trailing white spaces")]
+            public bool OptionRemoveTrailingWhiteSpace
+            {
+                get { return optionRemoveTrailingWhiteSpace; }
+                set { optionRemoveTrailingWhiteSpace = value; }
             }
         }
         #endregion
