@@ -21,7 +21,7 @@ namespace TextTools
     [ContentType("text")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     [TextViewRole(PredefinedTextViewRoles.Editable)]
-    class CommandProvider : IVsTextViewCreationListener, IWpfTextViewConnectionListener
+    class RemoveWhiteSpaceProvider : IVsTextViewCreationListener, IWpfTextViewConnectionListener
     {
         [Import]
         public IVsEditorAdaptersFactoryService EditorAdaptersFactoryService { get; set; }
@@ -45,8 +45,6 @@ namespace TextTools
         {
             DTE2 dte = serviceProvider.GetService(typeof(DTE)) as DTE2;
             IWpfTextView textView = EditorAdaptersFactoryService.GetWpfTextView(textViewAdapter);
-
-            textView.Properties.GetOrCreateSingletonProperty(() => new QuoteItCommand(textViewAdapter, textView, dte));
 
             textView.Properties.GetOrCreateSingletonProperty(() => new RemoveWhitespaceCommand(textViewAdapter, textView, dte));
 
