@@ -47,7 +47,6 @@ namespace TextTools
     [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "PostSave", 0, 0, true)]
     [Guid(PostSaveProcess.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-    [ProvideMenuResource("Menus.ctmenu", 1)]
     public sealed class PostSaveProcess : Package
     {
         /// <summary>
@@ -88,7 +87,6 @@ namespace TextTools
             documentEvents.DocumentSaved += OnDocumentSaved;
 
             Options = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
-            TextTools.QuickSearch.QuickSearchCommand.Initialize(this);
         }
 
         void OnDocumentSaved(Document doc)
