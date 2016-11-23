@@ -5,6 +5,7 @@
     <DisplayName>TextTools</DisplayName>
     <Description xml:space="preserve">Provide some utility for text editing.
 Convert encoding after save. Convert line ending after save. Column edit support. Remove trailing whitespaces.</Description>
+    <MoreInfo>https://github.com/avplayer/convert-line-ending</MoreInfo>
   </Metadata>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[14.0,15.0)" />
