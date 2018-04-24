@@ -54,7 +54,7 @@ namespace TextTools
         /// </summary>
         public const string PackageGuidString = "624A1C84-1E89-4FC9-8863-4FF2242FFB2B";
 
-        internal static OptionPageGrid Options { get; set; }
+        public static OptionPageGrid Options { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PostSaveProcess"/> class.
@@ -163,7 +163,7 @@ namespace TextTools
             return text;
         }
 
-        internal class OptionPageGrid : DialogPage
+        public class OptionPageGrid : DialogPage
         {
             public enum EnumCRLF
             {
@@ -203,6 +203,17 @@ namespace TextTools
             {
                 get { return optionRemoveTrailingWhiteSpace; }
                 set { optionRemoveTrailingWhiteSpace = value; }
+            }
+
+            bool optionOutputDebugInformation = false;
+
+            [Category("TextTools")]
+            [DisplayName("output debug information")]
+            [Description("output debug information to build output pane")]
+            public bool OptionOutputDebugInformation
+            {
+                get { return optionOutputDebugInformation; }
+                set { optionOutputDebugInformation = value; }
             }
         }
         #endregion

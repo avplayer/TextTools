@@ -13,6 +13,7 @@ using EnvDTE;
 using EnvDTE80;
 using System.Windows;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace TextTools
 {
@@ -88,14 +89,12 @@ namespace TextTools
             lastCaretPosition = textView.Caret.Position;
         }
 
-        public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
+        bool CheckCmd(ref Guid pguidGroup, uint cmdId)
         {
-            if (pguidCmdGroup == typeof(VSConstants.VSStd2KCmdID).GUID)
+            if (pguidGroup == typeof(VSConstants.VSStd2KCmdID).GUID)
             {
-                for (int i = 0; i < cCmds; i++)
+                switch(cmdId)
                 {
-                    switch (prgCmds[i].cmdID)
-                    {
                         case ((uint)VSConstants.VSStd2KCmdID.TYPECHAR):
                         case ((uint)VSConstants.VSStd2KCmdID.BACKSPACE):
                         case ((uint)VSConstants.VSStd2KCmdID.TAB):
@@ -122,8 +121,30 @@ namespace TextTools
                         case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT_EXT):
                         case ((uint)VSConstants.VSStd2KCmdID.WORDPREV):
                         case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT):
-                            prgCmds[i].cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
-                            return VSConstants.S_OK;
+                            return true;
+                }
+            }
+            else if(pguidGroup == typeof(VSConstants.VSStd97CmdID).GUID)
+            {
+                switch(cmdId)
+                {
+                    case ((uint)VSConstants.VSStd97CmdID.Delete):
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
+        {
+            if (pguidCmdGroup == typeof(VSConstants.VSStd2KCmdID).GUID)
+            {
+                for (int i = 0; i < cCmds; i++)
+                {
+                    if (CheckCmd(ref pguidCmdGroup, prgCmds[i].cmdID))
+                    {
+                        prgCmds[i].cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
+                        return VSConstants.S_OK;
                     }
                 }
             }
@@ -131,9 +152,48 @@ namespace TextTools
             return NextTarget.QueryStatus(ref pguidCmdGroup, cCmds, prgCmds, pCmdText);
         }
 
+        void WriteToOutput(String str)
+        {
+            if (str.Contains("Solution"))
+            {
+                return;
+            }
+            EnvDTE80.DTE2 dte = (EnvDTE80.DTE2)ServiceProvider.GlobalProvider.GetService(typeof(EnvDTE.DTE));
+
+            EnvDTE.OutputWindowPanes panes =
+                dte.ToolWindows.OutputWindow.OutputWindowPanes;
+            foreach (EnvDTE.OutputWindowPane pane in panes)
+            {
+                if (pane.Name.Contains("Éú³É")|| pane.Name.Contains("Build"))
+                {
+                    pane.OutputString(str + "\n");
+                    pane.Activate();
+                    return;
+                }
+            }
+        }
+
+        string TranslateGUID(ref Guid guid, uint cmd)
+        {
+            if (guid == typeof(VSConstants.VSStd2KCmdID).GUID)
+            {
+                string name = Enum.GetName(typeof(VSConstants.VSStd2KCmdID), cmd);
+                return "VSStd2KCmdID::" + name;
+            }
+            else if (guid == typeof(VSConstants.VSStd97CmdID).GUID)
+            {
+                string name = Enum.GetName(typeof(VSConstants.VSStd97CmdID), cmd);
+                return "VSStd97CmdID::" + name;
+            }
+            return guid.ToString() + "::" + cmd;
+        }
+
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
-            Debug.WriteLine(String.Format("{0}, {1}", pguidCmdGroup.ToString(), nCmdID));
+            if (PostSaveProcess.Options.OptionOutputDebugInformation)
+            {
+                WriteToOutput(String.Format("{0}", TranslateGUID(ref pguidCmdGroup, nCmdID)));
+            }
             if (pguidCmdGroup == typeof(VSConstants.VSStd2KCmdID).GUID)
             {
                 switch (nCmdID)
@@ -162,13 +222,27 @@ namespace TextTools
                     case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT_EXT):
                     case ((uint)VSConstants.VSStd2KCmdID.WORDPREV):
                     case ((uint)VSConstants.VSStd2KCmdID.WORDNEXT):
+                    case ((uint)VSConstants.VSStd2KCmdID.BOL_EXT):
+                    case ((uint)VSConstants.VSStd2KCmdID.EOL_EXT):
+                    case ((uint)VSConstants.VSStd2KCmdID.BOL_EXT_COL):
+                    case ((uint)VSConstants.VSStd2KCmdID.EOL_EXT_COL):
+                    case ((uint)VSConstants.VSStd2KCmdID.LEFT_EXT_COL):
+                    case ((uint)VSConstants.VSStd2KCmdID.RIGHT_EXT_COL):
+                    case ((uint)VSConstants.VSStd2KCmdID.UP_EXT_COL):
+                    case ((uint)VSConstants.VSStd2KCmdID.DOWN_EXT_COL):
+                    case ((uint)VSConstants.VSStd2KCmdID.COMMENT_BLOCK):
+                    case ((uint)VSConstants.VSStd2KCmdID.UNCOMMENT_BLOCK):
                         if (points.Count > 0)
                         {
                             return SyncedOperation(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
                         }
                         break;
                     case ((uint)VSConstants.VSStd2KCmdID.PASTE):
-                        return Paste(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                        if (points.Count > 0)
+                        {
+                            return Paste(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                        }
+                        break;
                     case ((uint)VSConstants.VSStd2KCmdID.COPY):
                         if(points.Count > 0)
                         {
@@ -188,6 +262,12 @@ namespace TextTools
             {
                 switch((VSConstants.VSStd97CmdID)nCmdID)
                 {
+                    case VSConstants.VSStd97CmdID.Delete:
+                        if (points.Count > 0)
+                        {
+                            return SyncedOperation(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                        }
+                        break;
                     case VSConstants.VSStd97CmdID.Paste:
                         if (points.Count > 0)
                         {
