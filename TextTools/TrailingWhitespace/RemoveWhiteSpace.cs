@@ -11,7 +11,7 @@ namespace TextTools
     {
         public static void RemoveTrailingWhitespace(ITextBuffer buffer)
         {
-            if (PostSaveProcess.Options.OptionRemoveTrailingWhiteSpace)
+            if (Config.RWS)
             {
                 using (var edit = buffer.CreateEdit())
                 {

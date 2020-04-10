@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // <copyright file="VSPackage1.cs" company="Company">
 //     Copyright (c) Company.  All rights reserved.
 // </copyright>
@@ -24,6 +24,39 @@ using System.ComponentModel;
 
 namespace TextTools
 {
+    public static class Config
+    {
+        public enum EnumCRLF
+        {
+            Keep,
+            CRLF,
+            LF,
+            Smart,
+        }
+
+        private static bool rws = true;
+        private static bool addbom = false;
+        private static EnumCRLF crlf = EnumCRLF.Smart;
+
+
+        public static bool RWS
+        {
+            get { return rws; }
+            set { rws = value; }
+        }
+        public static bool BOM
+        {
+            get { return addbom; }
+            set { addbom = value; }
+        }
+        public static EnumCRLF CRLF
+        {
+            get { return crlf; }
+            set { crlf = value; }
+        }
+
+    }
+
     /// <summary>
     /// This is the class that implements the package exposed by this assembly.
     /// </summary>
@@ -43,7 +76,7 @@ namespace TextTools
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-    //[ProvideAutoLoad(UIContextGuids.SolutionExists)]
+    [ProvideAutoLoad(UIContextGuids.SolutionExists)]
     [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "PostSave", 0, 0, true)]
     [Guid(PostSaveProcess.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
@@ -78,11 +111,10 @@ namespace TextTools
         /// </summary>
         protected override void Initialize()
         {
-            Debug.WriteLine("Initialize");
             base.Initialize();
-            //AddNextOccurCommand.Initialize(this);
 
             var dte = GetService(typeof(DTE)) as DTE2;
+
             documentEvents = dte.Events.DocumentEvents;
             documentEvents.DocumentSaved += OnDocumentSaved;
 
@@ -92,14 +124,14 @@ namespace TextTools
         void OnDocumentSaved(Document doc)
         {
             if (doc.Kind != "{8E7B96A8-E33D-11D0-A6D5-00C04FB67F6A}")
-            {
                 return;
-            }
+
             var path = doc.FullName;
             var stream = new FileStream(path, FileMode.Open);
 
             string text;
             stream.Position = 0;
+
             try
             {
                 var reader = new StreamReader(stream, new UTF8Encoding(false, true));
@@ -116,24 +148,20 @@ namespace TextTools
             var encoding = new UTF8Encoding(Options.OptionBOM, false);
             switch (Options.OptionCRLF)
             {
-                case OptionPageGrid.EnumCRLF.CRLF:
+                case Config.EnumCRLF.CRLF:
                     text = ConvertToCRLF(text);
                     break;
-                case OptionPageGrid.EnumCRLF.LF:
+                case Config.EnumCRLF.LF:
                     text = ConvertToLF(text);
                     break;
-                case OptionPageGrid.EnumCRLF.Smart:
+                case Config.EnumCRLF.Smart:
                     var crln = text.Length - text.Replace("\r\n", "\n").Length;
                     var ln = text.Split('\n').Length - 1 - crln;
 
                     if (crln > ln)
-                    {
                         text = ConvertToCRLF(text);
-                    }
                     else
-                    {
                         text = ConvertToLF(text);
-                    }
 
                     break;
                 default:
@@ -144,14 +172,11 @@ namespace TextTools
             writer.Write(encoding.GetPreamble());
             writer.Write(encoding.GetBytes(text));
             writer.Close();
-
-            Debug.WriteLine("Convert to UTF-8");
         }
 
         private static string ConvertToLF(string text)
         {
             text = text.Replace("\r\n", "\n");
-            Debug.WriteLine("Convert to LF");
             return text;
         }
 
@@ -159,61 +184,36 @@ namespace TextTools
         {
             text = text.Replace("\r\n", "\n");
             text = text.Replace("\n", "\r\n");
-            Debug.WriteLine("Convert to CRLF");
             return text;
         }
 
         public class OptionPageGrid : DialogPage
         {
-            public enum EnumCRLF
-            {
-                Keep,
-                CRLF,
-                LF,
-                Smart,
-            }
-            private EnumCRLF optionCrLf = 0;
-
             [Category("TextTools")]
             [DisplayName("convert to crlf")]
             [Description("0: keep line ending. |1: convert to \\r\\n.|2: convert to \\n. |3: smart line ending(less changes)")]
-            public EnumCRLF OptionCRLF
+            public Config.EnumCRLF OptionCRLF
             {
-                get { return optionCrLf; }
-                set { optionCrLf = value; }
+                get { return Config.CRLF; }
+                set { Config.CRLF = value; }
             }
-
-            private bool optionBOM = false;
 
             [Category("TextTools")]
             [DisplayName("add BOM")]
             [Description("Whether add BOM to file")]
             public bool OptionBOM
             {
-                get { return optionBOM; }
-                set { optionBOM = value; }
+                get { return Config.BOM; }
+                set { Config.BOM = value; }
             }
-
-            bool optionRemoveTrailingWhiteSpace = false;
 
             [Category("TextTools")]
             [DisplayName("remove trailing white spaces")]
             [Description("Whether remove trailing white spaces")]
             public bool OptionRemoveTrailingWhiteSpace
             {
-                get { return optionRemoveTrailingWhiteSpace; }
-                set { optionRemoveTrailingWhiteSpace = value; }
-            }
-
-            bool optionOutputDebugInformation = false;
-
-            [Category("TextTools")]
-            [DisplayName("output debug information")]
-            [Description("output debug information to build output pane")]
-            public bool OptionOutputDebugInformation
-            {
-                get { return optionOutputDebugInformation; }
-                set { optionOutputDebugInformation = value; }
+                get { return Config.RWS; }
+                set { Config.RWS = value; }
             }
         }
         #endregion
