@@ -34,27 +34,49 @@ namespace TextTools
             Smart,
         }
 
-        private static bool rws = true;
-        private static bool addbom = false;
-        private static EnumCRLF crlf = EnumCRLF.Smart;
+        private static RegistryKey tools;
 
+        static Config()
+        {
+            RegistryKey key = Registry.CurrentUser;
+            bool exist = false;
+
+            try
+            {
+                tools = key.OpenSubKey("software\\TextTools", true);
+                if (tools != null)
+                    exist = true;
+                else
+                    tools = key.CreateSubKey("software\\TextTools");
+            }
+            catch (ObjectDisposedException)
+            {
+                tools = key.CreateSubKey("software\\TextTools");
+            }
+
+            if (!exist)
+            {
+                tools.SetValue("rws", true, RegistryValueKind.DWord);
+                tools.SetValue("addbom", false, RegistryValueKind.DWord);
+                tools.SetValue("crlf", EnumCRLF.Smart, RegistryValueKind.DWord);
+            }
+        }
 
         public static bool RWS
         {
-            get { return rws; }
-            set { rws = value; }
+            get { return Convert.ToBoolean(tools.GetValue("rws", true)); }
+            set { tools.SetValue("rws", value, RegistryValueKind.DWord); }
         }
         public static bool BOM
         {
-            get { return addbom; }
-            set { addbom = value; }
+            get { return Convert.ToBoolean(tools.GetValue("addbom", true)); }
+            set { tools.SetValue("addbom", value, RegistryValueKind.DWord); }
         }
         public static EnumCRLF CRLF
         {
-            get { return crlf; }
-            set { crlf = value; }
+            get { return (EnumCRLF)Convert.ToInt32(tools.GetValue("crlf", true)); }
+            set { tools.SetValue("crlf", value, RegistryValueKind.DWord); }
         }
-
     }
 
     /// <summary>
@@ -76,7 +98,7 @@ namespace TextTools
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-    [ProvideAutoLoad(UIContextGuids.SolutionExists)]
+    // [ProvideAutoLoad(UIContextGuids.SolutionExists)]
     [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "PostSave", 0, 0, true)]
     [Guid(PostSaveProcess.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
@@ -93,13 +115,7 @@ namespace TextTools
         /// Initializes a new instance of the <see cref="PostSaveProcess"/> class.
         /// </summary>
         public PostSaveProcess()
-        {
-            // Inside this method you can place any initialization code that does not require
-            // any Visual Studio service because at this point the package object is created but
-            // not sited yet inside Visual Studio environment. The place to do all the other
-            // initialization is the Initialize method.
-            Debug.WriteLine("Construct");
-        }
+        {}
 
         #region Package Members
 
