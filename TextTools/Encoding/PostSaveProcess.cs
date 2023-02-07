@@ -54,6 +54,7 @@ namespace TextTools
                 tools.SetValue("rws", true, RegistryValueKind.DWord);
                 tools.SetValue("addbom", false, RegistryValueKind.DWord);
                 tools.SetValue("crlf", EnumCRLF.Smart, RegistryValueKind.DWord);
+                tools.SetValue("resetva", false, RegistryValueKind.DWord);
             }
         }
 
@@ -72,12 +73,17 @@ namespace TextTools
             get { return (EnumCRLF)Convert.ToInt32(tools.GetValue("crlf", true)); }
             set { tools.SetValue("crlf", value, RegistryValueKind.DWord); }
         }
+        public static bool reset
+        {
+            get { return Convert.ToBoolean(tools.GetValue("resetva", false)); }
+            set { tools.SetValue("resetva", value, RegistryValueKind.DWord); }
+        }
     }
 
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
-    [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "PostSave", 0, 0, true)]
+    [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "Option", 0, 0, true)]
     [Guid(PostSaveProcess.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class PostSaveProcess : AsyncPackage
@@ -89,7 +95,7 @@ namespace TextTools
         private static OptionPageGrid Options { get; set; }
         private DocumentEvents documentEvents;
         public PostSaveProcess()
-        { }
+        {}
 
         protected override async System.Threading.Tasks.Task InitializeAsync(System.Threading.CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
@@ -105,7 +111,22 @@ namespace TextTools
         void OnDocumentSaved(Document doc)
         {
             if (Options == null)
+            {
                 Options = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+
+                if (Options.OptionResetVA)
+                {
+                    string tmpfile = Path.GetTempPath() + "1489AFE4.TMP";
+                    if (File.Exists(tmpfile))
+                        File.Delete(tmpfile);
+
+                    using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE", true))
+                    {
+                        if (key != null)
+                            key.DeleteSubKeyTree("Licenses");
+                    }
+                }
+            }
 
             if (doc.Kind != "{8E7B96A8-E33D-11D0-A6D5-00C04FB67F6A}")
                 return;
@@ -198,6 +219,15 @@ namespace TextTools
             {
                 get { return Config.RWS; }
                 set { Config.RWS = value; }
+            }
+
+            [Category("TextTools")]
+            [DisplayName("reset vassistx")]
+            [Description("Resets the trial period for Visual Assist X")]
+            public bool OptionResetVA
+            {
+                get { return Config.reset; }
+                set { Config.reset = value; }
             }
         }
 #endregion
