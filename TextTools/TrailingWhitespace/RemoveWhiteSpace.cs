@@ -9,6 +9,21 @@ namespace TextTools
 {
     class RemoveWhiteSpace
     {
+        // String literal and c++ raw string state machine.
+        public enum StringliteralState
+        {
+            Nono,
+            Quote,
+        };
+
+        public enum RawStringState
+        {
+            Nono,
+            Prefix,
+            RawString,
+            Suffix,
+        };
+
         public static void RemoveTrailingWhitespace(ITextBuffer buffer)
         {
             if (Config.RWS)
@@ -16,26 +31,117 @@ namespace TextTools
                 using (var edit = buffer.CreateEdit())
                 {
                     var snap = edit.Snapshot;
-                    var isVerbatimString = false;
+
+                    StringliteralState stringState = StringliteralState.Nono;
+                    RawStringState rawString = RawStringState.Nono;
+
+                    string prefix = "";
+                    string suffix = "";
+
+                    char backChar = '\0';
+                    int spaceStart = 0;
+
                     foreach (var line in snap.Lines)
                     {
                         string text = line.GetText();
-                        if (text.Contains("@\"") && text.Count(f => f == '"') == 1)
-                            isVerbatimString = true;
-                        else if (isVerbatimString && text.Contains("\""))
-                            isVerbatimString = false;
-
-                        if (!isVerbatimString)
+                        foreach (char c in text)
                         {
-                            int length = text.Length;
-                            while (--length >= 0 && Char.IsWhiteSpace(text[length])) ;
-                            if (length < text.Length - 1)
+                            if (rawString != RawStringState.Nono)
                             {
-                                int start = line.Start.Position;
-                                edit.Delete(start + length + 1, text.Length - length - 1);
+                                switch (rawString)
+                                {
+                                    case RawStringState.Prefix:
+                                        if (c == '(')
+                                        {
+                                            rawString = RawStringState.RawString;
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            prefix = prefix + c;
+                                            continue;
+                                        }
+                                    case RawStringState.RawString:
+                                        if (c != ')')
+                                            continue;
+                                        else
+                                            rawString = RawStringState.Suffix;
+                                        continue;
+                                    case RawStringState.Suffix:
+                                        if (c != '\"')
+                                            suffix = suffix + c;
+                                        else if (suffix == prefix)
+                                        {
+                                            rawString = RawStringState.Nono;
+                                            prefix = suffix = "";
+                                            spaceStart = 0;
+                                        }
+                                        else
+                                        {
+                                            suffix = "";
+                                            rawString = RawStringState.RawString;
+                                        }
+                                        continue;
+                                }
+                            }
+
+                            // Skip all \" substring
+                            if (backChar == '\\' && c == '\"')
+                            {
+                                backChar = c;
+                                if (spaceStart != 0)
+                                    spaceStart = 0;
+                                continue;
+                            }
+
+                            // C++ raw string literal
+                            if (backChar == 'R' && c == '\"')
+                            {
+                                rawString = RawStringState.Prefix;
+                                continue;
+                            }
+
+                            backChar = c;
+
+                            // String literal
+                            switch (stringState)
+                            {
+                                case StringliteralState.Nono:
+                                    if (c == '\"')
+                                    {
+                                        stringState = StringliteralState.Quote;
+                                        if (spaceStart != 0)
+                                            spaceStart = 0;
+                                        continue;
+                                    }
+                                    break;
+                                case StringliteralState.Quote:
+                                    if (c == '\"')
+                                        stringState = StringliteralState.Nono;
+                                    continue;
+                            }
+
+                            if (Char.IsWhiteSpace(c))
+                            {
+                                spaceStart++;
+                                continue;
+                            }
+                            else
+                            {
+                                spaceStart = 0;
+                                continue;
                             }
                         }
+
+                        if (spaceStart != 0)
+                        {
+                            int start = line.Start.Position + text.Length - spaceStart;
+                            edit.Delete(start, spaceStart);
+                        }
+
+                        spaceStart = 0;
                     }
+
                     edit.Apply();
                 }
             }
