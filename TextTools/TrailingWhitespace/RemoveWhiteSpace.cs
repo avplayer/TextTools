@@ -93,6 +93,14 @@ namespace TextTools
                                     spaceStart = 0;
                                 continue;
                             }
+                            // Skip \\ substring
+                            else if (backChar == '\\' && c == '\\')
+                            {
+                                backChar = ' ';
+                                if (spaceStart != 0)
+                                    spaceStart = 0;
+                                continue;
+                            }
 
                             // C++ raw string literal
                             if (backChar == 'R' && c == '\"')
