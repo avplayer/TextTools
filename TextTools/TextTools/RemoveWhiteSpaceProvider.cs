@@ -27,8 +27,13 @@ namespace TextTools
         [Import]
         public ITextDocumentFactoryService TextDocumentFactoryService { get; set; }
 
-        public void SubjectBuffersConnected(IWpfTextView textView, ConnectionReason reason, Collection<ITextBuffer> subjectBuffers)
+        public async void SubjectBuffersConnected(IWpfTextView textView, ConnectionReason reason, Collection<ITextBuffer> subjectBuffers)
         {
+            foreach (ITextBuffer buffer in subjectBuffers)
+            {
+                if (buffer.Properties.TryGetProperty(typeof(TrailingClassifier), out TrailingClassifier classifier))
+                    await classifier.SetTextViewAsync(textView);
+            }
         }
 
         public void SubjectBuffersDisconnected(IWpfTextView textView, ConnectionReason reason, Collection<ITextBuffer> subjectBuffers)
@@ -43,10 +48,9 @@ namespace TextTools
             textView.Properties.GetOrCreateSingletonProperty(() => new RemoveWhitespaceCommand(textViewAdapter, textView, dte));
 
             ITextDocument doc;
+
             if (TextDocumentFactoryService.TryGetTextDocument(textView.TextDataModel.DocumentBuffer, out doc))
-            {
                 textView.Properties.GetOrCreateSingletonProperty(() => new RemoveWhitespaceOnSave(textViewAdapter, textView, dte, doc));
-            }
         }
     }
 }

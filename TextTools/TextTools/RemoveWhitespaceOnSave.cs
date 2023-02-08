@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using EnvDTE80;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Text;
@@ -27,16 +27,17 @@ namespace TextTools
             textViewAdapter.AddCommandFilter(this, out NextCommandTarget);
         }
 
-        private static uint[] _cmds = new uint[]{ (uint)VSConstants.VSStd97CmdID.SaveProjectItem, (uint)VSConstants.VSStd97CmdID.SaveSolution };
+        private static uint[] _cmds = new uint[] { (uint)VSConstants.VSStd97CmdID.SaveProjectItem, (uint)VSConstants.VSStd97CmdID.SaveSolution };
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
             if (pguidCmdGroup == typeof(VSConstants.VSStd97CmdID).GUID && _cmds.Contains(nCmdID))
             {
                 ITextBuffer buffer = textView.TextBuffer;
 
-                if (buffer.CheckEditAccess())
+                if (buffer != null && buffer.CheckEditAccess())
                 {
-                    RemoveTrailingWhitespace(buffer);
+                    if (FileHelpers.IsFileSupported(buffer))
+                        RemoveTrailingWhitespace(buffer);
                 }
             }
             return NextCommandTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);

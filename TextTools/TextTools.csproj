@@ -74,17 +74,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Encoding\PostSaveProcess.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Resource1.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resource1.resx</DependentUpon>
-    </Compile>
-    <Compile Include="TrailingWhitespace\RemoveWhiteSpace.cs" />
-    <Compile Include="TrailingWhitespace\RemoveWhitespaceCommand.cs" />
-    <Compile Include="TrailingWhitespace\RemoveWhitespaceOnSave.cs" />
-    <Compile Include="TrailingWhitespace\RemoveWhiteSpaceProvider.cs" />
+    <Compile Include="TextTools\ClassificationTypes.cs" />
+    <Compile Include="TextTools\Classifier.cs" />
+    <Compile Include="TextTools\ClassifierProvider.cs" />
+    <Compile Include="TextTools\FileHelpers.cs" />
+    <Compile Include="TextTools\TextTools.cs" />
+    <Compile Include="TextTools\RemoveWhiteSpace.cs" />
+    <Compile Include="TextTools\RemoveWhitespaceCommand.cs" />
+    <Compile Include="TextTools\RemoveWhitespaceOnSave.cs" />
+    <Compile Include="TextTools\RemoveWhiteSpaceProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
@@ -94,8 +93,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="index.html" />
-    <Content Include="Resources\PostSaveProcess1.ico" />
+    <Content Include="Resources\TextTools.ico" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>
@@ -314,13 +312,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="UIAutomationProvider" />
     <Reference Include="WindowsBase" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resource1.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource1.Designer.cs</LastGenOutput>
-      <MergeWithCTO>true</MergeWithCTO>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">

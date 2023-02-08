@@ -1,10 +1,4 @@
-﻿//------------------------------------------------------------------------------
-// <copyright file="VSPackage1.cs" company="Company">
-//     Copyright (c) Company.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
@@ -16,12 +10,13 @@ using System.IO;
 using System.Text;
 using System.ComponentModel;
 using Microsoft;
+using System.Collections.Generic;
 
 namespace TextTools
 {
     public static class Config
     {
-        public enum EnumCRLF
+        public enum EnumEOL
         {
             Keep,
             CRLF,
@@ -53,7 +48,7 @@ namespace TextTools
             {
                 tools.SetValue("rws", true, RegistryValueKind.DWord);
                 tools.SetValue("addbom", false, RegistryValueKind.DWord);
-                tools.SetValue("crlf", EnumCRLF.Smart, RegistryValueKind.DWord);
+                tools.SetValue("eol", EnumEOL.Smart, RegistryValueKind.DWord);
                 tools.SetValue("resetva", false, RegistryValueKind.DWord);
             }
         }
@@ -68,25 +63,39 @@ namespace TextTools
             get { return Convert.ToBoolean(tools.GetValue("addbom", true)); }
             set { tools.SetValue("addbom", value, RegistryValueKind.DWord); }
         }
-        public static EnumCRLF CRLF
+        public static EnumEOL EOL
         {
-            get { return (EnumCRLF)Convert.ToInt32(tools.GetValue("crlf", true)); }
-            set { tools.SetValue("crlf", value, RegistryValueKind.DWord); }
+            get { return (EnumEOL)Convert.ToInt32(tools.GetValue("eol", true)); }
+            set { tools.SetValue("eol", value, RegistryValueKind.DWord); }
         }
-        public static bool reset
+        public static string IgnorePatterns
+        {
+            get { return Convert.ToString(tools.GetValue("ignorePatterns", @".conf, .ini, .md, .txt, .log, \node_modules\")); }
+            set { tools.SetValue("ignorePatterns", value, RegistryValueKind.String); }
+        }
+        public static bool Reset
         {
             get { return Convert.ToBoolean(tools.GetValue("resetva", false)); }
             set { tools.SetValue("resetva", value, RegistryValueKind.DWord); }
         }
+
+        public static IEnumerable<string> GetIgnorePatterns()
+        {
+            var raw = IgnorePatterns.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string pattern in raw)
+                yield return pattern.Trim();
+        }
+
     }
 
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "Option", 0, 0, true)]
-    [Guid(PostSaveProcess.PackageGuidString)]
+    [Guid(TextTools.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-    public sealed class PostSaveProcess : AsyncPackage
+    public sealed class TextTools : AsyncPackage
     {
         public const string PackageGuidString = "624A1C84-1E89-4FC9-8863-4FF2242FFB2B";
 
@@ -94,7 +103,7 @@ namespace TextTools
 
         private static OptionPageGrid Options { get; set; }
         private DocumentEvents documentEvents;
-        public PostSaveProcess()
+        public TextTools()
         {}
 
         protected override async System.Threading.Tasks.Task InitializeAsync(System.Threading.CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
@@ -132,6 +141,10 @@ namespace TextTools
                 return;
 
             var path = doc.FullName;
+
+            if (!FileHelpers.IsFileSupported(path))
+                return;
+
             var stream = new FileStream(path, FileMode.Open);
 
             string text;
@@ -151,15 +164,15 @@ namespace TextTools
             stream.Close();
 
             var encoding = new UTF8Encoding(Options.OptionBOM, false);
-            switch (Options.OptionCRLF)
+            switch (Options.OptionEOL)
             {
-                case Config.EnumCRLF.CRLF:
+                case Config.EnumEOL.CRLF:
                     text = ConvertToCRLF(text);
                     break;
-                case Config.EnumCRLF.LF:
+                case Config.EnumEOL.LF:
                     text = ConvertToLF(text);
                     break;
-                case Config.EnumCRLF.Smart:
+                case Config.EnumEOL.Smart:
                     var crln = text.Length - text.Replace("\r\n", "\n").Length;
                     var ln = text.Split('\n').Length - 1 - crln;
 
@@ -195,17 +208,17 @@ namespace TextTools
         public class OptionPageGrid : DialogPage
         {
             [Category("TextTools")]
-            [DisplayName("convert to crlf")]
+            [DisplayName("Convert end of line")]
             [Description("0: keep line ending. |1: convert to \\r\\n.|2: convert to \\n. |3: smart line ending(less changes)")]
-            public Config.EnumCRLF OptionCRLF
+            public Config.EnumEOL OptionEOL
             {
-                get { return Config.CRLF; }
-                set { Config.CRLF = value; }
+                get { return Config.EOL; }
+                set { Config.EOL = value; }
             }
 
             [Category("TextTools")]
-            [DisplayName("add BOM")]
-            [Description("Whether add BOM to file")]
+            [DisplayName("add BOM for utf8")]
+            [Description("Whether add BOM to file head")]
             public bool OptionBOM
             {
                 get { return Config.BOM; }
@@ -213,7 +226,7 @@ namespace TextTools
             }
 
             [Category("TextTools")]
-            [DisplayName("remove trailing white spaces")]
+            [DisplayName("Remove trailing white spaces")]
             [Description("Whether remove trailing white spaces")]
             public bool OptionRemoveTrailingWhiteSpace
             {
@@ -222,12 +235,22 @@ namespace TextTools
             }
 
             [Category("TextTools")]
-            [DisplayName("reset vassistx")]
+            [DisplayName("Reset vassistx")]
             [Description("Resets the trial period for Visual Assist X")]
             public bool OptionResetVA
             {
-                get { return Config.reset; }
-                set { Config.reset = value; }
+                get { return Config.Reset; }
+                set { Config.Reset = value; }
+            }
+
+            [Category("TextTools")]
+            [DisplayName("Ignore pattern")]
+            [Description("A comma-separated list of strings. Any file containing one of the strings in the path will be ignored.")]
+            [DefaultValue(@".conf, .ini, .md, .txt, .log, \node_modules\")]
+            public string OptionIgnorePatterns
+            {
+                get { return Config.IgnorePatterns; }
+                set { Config.IgnorePatterns = value; }
             }
         }
 #endregion

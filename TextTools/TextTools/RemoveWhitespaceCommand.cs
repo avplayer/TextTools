@@ -24,7 +24,7 @@ namespace TextTools
             textViewAdapter.AddCommandFilter(this, out NextCommandTarget);
         }
 
-        public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, Microsoft.VisualStudio.OLE.Interop.OLECMD[] prgCmds, IntPtr pCmdText)
+        public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
         {
             return NextCommandTarget.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
         }
