@@ -1,0 +1,12 @@
+image: Visual Studio 2022
+
+before_build:
+  - nuget restore .
+
+build_script:
+  - msbuild .\TextTools.sln /p:Configuration=Release
+
+artifacts:
+  - path: TextTools\bin\Release\TextTools.vsix
+
+test: off
