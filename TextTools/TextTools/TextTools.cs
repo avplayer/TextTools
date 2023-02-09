@@ -24,6 +24,13 @@ namespace TextTools
             Smart,
         }
 
+        public enum EnumUTF8
+        {
+            Keep,
+            UTF8,
+            UTF8BOM
+        }
+
         private static RegistryKey tools;
 
         static Config()
@@ -47,7 +54,7 @@ namespace TextTools
             if (!exist)
             {
                 tools.SetValue("rws", true, RegistryValueKind.DWord);
-                tools.SetValue("addbom", false, RegistryValueKind.DWord);
+                tools.SetValue("utf8", false, RegistryValueKind.DWord);
                 tools.SetValue("eol", EnumEOL.Smart, RegistryValueKind.DWord);
                 tools.SetValue("resetva", false, RegistryValueKind.DWord);
             }
@@ -58,10 +65,10 @@ namespace TextTools
             get { return Convert.ToBoolean(tools.GetValue("rws", true)); }
             set { tools.SetValue("rws", value, RegistryValueKind.DWord); }
         }
-        public static bool BOM
+        public static EnumUTF8 Utf8Encoding
         {
-            get { return Convert.ToBoolean(tools.GetValue("addbom", true)); }
-            set { tools.SetValue("addbom", value, RegistryValueKind.DWord); }
+            get { return (EnumUTF8)(tools.GetValue("utf8", EnumUTF8.UTF8)); }
+            set { tools.SetValue("utf8", value, RegistryValueKind.DWord); }
         }
         public static EnumEOL EOL
         {
@@ -92,7 +99,7 @@ namespace TextTools
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
-    [ProvideOptionPage(typeof(OptionPageGrid), "TextTools", "Option", 0, 0, true)]
+    [ProvideOptionPage(typeof(OptionPageGrid), "文本工具", "选项", 0, 0, true)]
     [Guid(TextTools.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class TextTools : AsyncPackage
@@ -149,21 +156,23 @@ namespace TextTools
 
             string text;
             stream.Position = 0;
+            Encoding currentEncoding;
 
             try
             {
                 var reader = new StreamReader(stream, new UTF8Encoding(false, true));
                 text = reader.ReadToEnd();
+                currentEncoding = reader.CurrentEncoding;
             }
-            catch(DecoderFallbackException)
+            catch (DecoderFallbackException)
             {
                 stream.Position = 0;
                 var reader = new StreamReader(stream, Encoding.Default, true);
                 text = reader.ReadToEnd();
+                currentEncoding = reader.CurrentEncoding;
             }
             stream.Close();
 
-            var encoding = new UTF8Encoding(Options.OptionBOM, false);
             switch (Options.OptionEOL)
             {
                 case Config.EnumEOL.CRLF:
@@ -185,10 +194,24 @@ namespace TextTools
                 default:
                     break;
             }
+
             stream = File.Open(path, FileMode.Truncate | FileMode.OpenOrCreate);
             var writer = new BinaryWriter(stream);
+
+            if (Options.OptionUTF8 == Config.EnumUTF8.Keep)
+            {
+                writer.Write(currentEncoding.GetPreamble());
+                writer.Write(currentEncoding.GetBytes(text));
+                writer.Close();
+                return;
+            }
+
+            bool bom = Options.OptionUTF8 == Config.EnumUTF8.UTF8BOM;
+            UTF8Encoding encoding = new UTF8Encoding(bom, false);
+
             writer.Write(encoding.GetPreamble());
             writer.Write(encoding.GetBytes(text));
+
             writer.Close();
         }
 
@@ -207,46 +230,46 @@ namespace TextTools
 
         public class OptionPageGrid : DialogPage
         {
-            [Category("TextTools")]
-            [DisplayName("Convert end of line")]
-            [Description("0: keep line ending. |1: convert to \\r\\n.|2: convert to \\n. |3: smart line ending(less changes)")]
+            [Category("文本工具")]
+            [DisplayName("转换换行符")]
+            [Description(@"Smart 表示自动转换(统一为文本中最多的换行符)")]
             public Config.EnumEOL OptionEOL
             {
                 get { return Config.EOL; }
                 set { Config.EOL = value; }
             }
 
-            [Category("TextTools")]
-            [DisplayName("add BOM for utf8")]
-            [Description("Whether add BOM to file head")]
-            public bool OptionBOM
+            [Category("文本工具")]
+            [DisplayName("自动转换为UTF8编码")]
+            [Description(@"将当前源文件自动转换为UTF8编码")]
+            public Config.EnumUTF8 OptionUTF8
             {
-                get { return Config.BOM; }
-                set { Config.BOM = value; }
+                get { return Config.Utf8Encoding; }
+                set { Config.Utf8Encoding = value; }
             }
 
-            [Category("TextTools")]
-            [DisplayName("Remove trailing white spaces")]
-            [Description("Whether remove trailing white spaces")]
+            [Category("文本工具")]
+            [DisplayName("删除行尾空白")]
+            [Description("是否开启删除行尾空白")]
             public bool OptionRemoveTrailingWhiteSpace
             {
                 get { return Config.RWS; }
                 set { Config.RWS = value; }
             }
 
-            [Category("TextTools")]
-            [DisplayName("Reset vassistx")]
-            [Description("Resets the trial period for Visual Assist X")]
+            [Category("文本工具")]
+            [DisplayName("重置VAX插件试用")]
+            [Description("自动重置VAX插件试用，推荐购买正版VAX")]
             public bool OptionResetVA
             {
                 get { return Config.Reset; }
                 set { Config.Reset = value; }
             }
 
-            [Category("TextTools")]
-            [DisplayName("Ignore pattern")]
-            [Description("A comma-separated list of strings. Any file containing one of the strings in the path will be ignored.")]
-            [DefaultValue(@".conf, .ini, .md, .txt, .log, \node_modules\")]
+            [Category("文本工具")]
+            [DisplayName("忽略文件")]
+            [Description("忽略列表, 以逗号分隔, 匹配规则为完整文件名中包含列表中某一项将被忽略")]
+            [DefaultValue(@".conf, .ini, .md, .txt, .log, .bat, \node_modules\")]
             public string OptionIgnorePatterns
             {
                 get { return Config.IgnorePatterns; }
