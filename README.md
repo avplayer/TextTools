@@ -15,3 +15,4 @@ Visual Studio 实用编码格式转换插件 (Visual Studio extension for text e
 
 <img src="https://user-images.githubusercontent.com/378220/217742132-fc40e76c-d942-4489-bafd-086e7dfbb132.png" alt="drawing" width=60%/>
 
+如遇到编译问题，可能需要使用 nuget 更新程序包到最新版本
