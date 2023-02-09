@@ -20,10 +20,18 @@ namespace TextTools
     [UserVisible(true)]
     sealed class TextToolsFormatDefinition : ClassificationFormatDefinition
     {
+        public static bool IsChineseSimple()
+        {
+            return System.Threading.Thread.CurrentThread.CurrentCulture.Name == "zh-CN";
+        }
+
         public TextToolsFormatDefinition()
         {
             BackgroundColor = Color.FromRgb(255, 145, 145);
-            DisplayName = "Trailing Whitespace";
+            if (IsChineseSimple())
+                DisplayName = "行尾空白";
+            else
+                DisplayName = "Trailing Whitespace";
         }
     }
 }
