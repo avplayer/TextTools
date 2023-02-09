@@ -27,7 +27,14 @@ namespace TextTools
             textViewAdapter.AddCommandFilter(this, out NextCommandTarget);
         }
 
-        private static uint[] _cmds = new uint[] { (uint)VSConstants.VSStd97CmdID.SaveProjectItem, (uint)VSConstants.VSStd97CmdID.SaveSolution };
+        private static uint[] _cmds = new uint[] {
+            (uint)VSConstants.VSStd97CmdID.SaveProjectItem,
+            (uint)VSConstants.VSStd97CmdID.SaveSolution,
+            (uint)VSConstants.VSStd97CmdID.BuildSln,
+            (uint)VSConstants.VSStd97CmdID.RebuildSln,
+            (uint)VSConstants.VSStd97CmdID.BuildSel,
+            (uint)VSConstants.VSStd97CmdID.RebuildSel
+        };
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
             if (pguidCmdGroup == typeof(VSConstants.VSStd97CmdID).GUID && _cmds.Contains(nCmdID))
