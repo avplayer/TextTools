@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
+using System.IO;
 
 namespace TextTools
 {
@@ -24,6 +25,12 @@ namespace TextTools
         {
             if (Config.RWS)
             {
+                string fileName = buffer.GetFilePath();
+                if (string.IsNullOrWhiteSpace(fileName) || !Path.IsPathRooted(fileName))
+                    return;
+
+                bool csharp = Path.GetExtension(fileName).Equals(".cs", StringComparison.OrdinalIgnoreCase);
+
                 using (var edit = buffer.CreateEdit())
                 {
                     var snap = edit.Snapshot;
@@ -34,8 +41,10 @@ namespace TextTools
                     string prefix = "";
                     string suffix = "";
 
-                    char backChar = '\0';
+                    const char zeroChar = '\0';
+                    char backChar = zeroChar;
                     int spaceStart = 0;
+                    bool verbatimString = false;
 
                     foreach (var line in snap.Lines)
                     {
@@ -81,6 +90,19 @@ namespace TextTools
                                 }
                             }
 
+                            // Verbatim string skip
+                            if (verbatimString)
+                            {
+                                if (c == '\"')
+                                {
+                                    backChar = zeroChar;
+                                    spaceStart = 0;
+                                    verbatimString = false;
+                                }
+
+                                continue;
+                            }
+
                             // Skip all \" substring
                             if (backChar == '\\' && c == '\"')
                             {
@@ -92,7 +114,7 @@ namespace TextTools
                             // Skip \\ substring
                             else if (backChar == '\\' && c == '\\')
                             {
-                                backChar = ' ';
+                                backChar = zeroChar;
                                 if (spaceStart != 0)
                                     spaceStart = 0;
                                 continue;
@@ -102,6 +124,13 @@ namespace TextTools
                             if (backChar == 'R' && c == '\"')
                             {
                                 rawString = RawStringState.Prefix;
+                                continue;
+                            }
+
+                            // C# verbatim string
+                            if (csharp && backChar == '@' && c == '\"')
+                            {
+                                verbatimString = true;
                                 continue;
                             }
 
