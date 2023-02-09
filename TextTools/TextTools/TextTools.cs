@@ -77,7 +77,7 @@ namespace TextTools
         }
         public static string IgnorePatterns
         {
-            get { return Convert.ToString(tools.GetValue("ignorePatterns", @".conf, .ini, .md, .txt, .log, \node_modules\")); }
+            get { return Convert.ToString(tools.GetValue("ignorePatterns", @".conf, .ini, .md, .txt, .log, .bat, \node_modules\")); }
             set { tools.SetValue("ignorePatterns", value, RegistryValueKind.String); }
         }
         public static bool Reset
