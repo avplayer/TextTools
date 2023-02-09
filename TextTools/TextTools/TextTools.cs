@@ -235,8 +235,8 @@ namespace TextTools
         public class OptionPageGrid : DialogPage
         {
             [Category("文本工具")]
-            [DisplayName("转换换行符")]
-            [Description(@"Smart 表示自动转换(统一为文本中最多的换行符)")]
+            [DisplayName("换行符")]
+            [Description(@"可根据选择自动转换转行符, 其中 Smart 表示自动转换(统一为文本中最多的换行符)")]
             public Config.EnumEOL OptionEOL
             {
                 get { return Config.EOL; }
@@ -244,8 +244,8 @@ namespace TextTools
             }
 
             [Category("文本工具")]
-            [DisplayName("自动转换为UTF8编码")]
-            [Description(@"将当前源文件自动转换为UTF8编码")]
+            [DisplayName("UTF8编码")]
+            [Description(@"可将当前源文件自动转换为UTF8编码")]
             public Config.EnumUTF8 OptionUTF8
             {
                 get { return Config.Utf8Encoding; }
