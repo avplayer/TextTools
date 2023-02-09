@@ -1,5 +1,5 @@
-# convert-line-ending
-[![Build status](https://ci.appveyor.com/api/projects/status/75w05nwsi00o7tv2/branch/vs2019?svg=true)](https://github.com/avplayer/convert-line-ending)
+# TextTools
+[![Build status](https://ci.appveyor.com/api/projects/status/75w05nwsi00o7tv2/branch/vs2019?svg=true)](https://github.com/avplayer/TextTools)
 
 
 Visual Studio 实用编码格式转换插件 (Visual Studio extension for text editing)
