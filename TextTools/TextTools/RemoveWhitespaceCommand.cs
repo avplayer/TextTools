@@ -35,7 +35,7 @@ namespace TextTools
             {
                 ITextBuffer buffer = textView.TextBuffer;
 
-                if (buffer.CheckEditAccess())
+                if (buffer != null && buffer.CheckEditAccess())
                 {
                     RemoveTrailingWhitespace(buffer);
                     return VSConstants.S_OK;
