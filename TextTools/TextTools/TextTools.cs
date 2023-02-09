@@ -122,6 +122,10 @@ namespace TextTools
 
             documentEvents = dte.Events.DocumentEvents;
             documentEvents.DocumentSaved += OnDocumentSaved;
+
+            IVsStatusbar statusBar = (IVsStatusbar)await GetServiceAsync(typeof(SVsStatusbar));
+            if (statusBar != null)
+                statusBar.SetText("TextTools 插件初始化完成");
         }
 
         void OnDocumentSaved(Document doc)
