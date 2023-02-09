@@ -1,4 +1,7 @@
 # convert-line-ending
+[![Build status](https://ci.appveyor.com/api/projects/status/75w05nwsi00o7tv2/branch/vs2019?svg=true)](https://github.com/avplayer/convert-line-ending)
+
+
 Visual Studio 实用编码格式转换插件 (Visual Studio extension for text editing)
 
 - 支持删除行尾空格 (Rmove trailing whitespace)
