@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.TextManager.Interop;
