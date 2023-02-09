@@ -13,5 +13,5 @@ Visual Studio 实用编码格式转换插件 (Visual Studio extension for text e
 
 选项配置参数:
 
-<img src="https://user-images.githubusercontent.com/378220/217583864-11bc9e41-19e3-4cc6-a0e0-c437bf190744.png" alt="drawing" width=60%/>
+<img src="https://user-images.githubusercontent.com/378220/217742132-fc40e76c-d942-4489-bafd-086e7dfbb132.png" alt="drawing" width=60%/>
 
