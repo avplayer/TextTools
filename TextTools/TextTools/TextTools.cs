@@ -56,7 +56,6 @@ namespace TextTools
                 tools.SetValue("rws", true, RegistryValueKind.DWord);
                 tools.SetValue("utf8", false, RegistryValueKind.DWord);
                 tools.SetValue("eol", EnumEOL.Smart, RegistryValueKind.DWord);
-                tools.SetValue("resetva", false, RegistryValueKind.DWord);
             }
         }
 
@@ -79,11 +78,6 @@ namespace TextTools
         {
             get { return Convert.ToString(tools.GetValue("ignorePatterns", @".conf, .ini, .md, .txt, .log, .bat, \node_modules\")); }
             set { tools.SetValue("ignorePatterns", value, RegistryValueKind.String); }
-        }
-        public static bool Reset
-        {
-            get { return Convert.ToBoolean(tools.GetValue("resetva", false)); }
-            set { tools.SetValue("resetva", value, RegistryValueKind.DWord); }
         }
 
         public static IEnumerable<string> GetIgnorePatterns()
@@ -131,22 +125,7 @@ namespace TextTools
         void OnDocumentSaved(Document doc)
         {
             if (Options == null)
-            {
                 Options = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
-
-                if (Options.OptionResetVA)
-                {
-                    string tmpfile = Path.GetTempPath() + "1489AFE4.TMP";
-                    if (File.Exists(tmpfile))
-                        File.Delete(tmpfile);
-
-                    using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE", true))
-                    {
-                        if (key != null)
-                            key.DeleteSubKeyTree("Licenses");
-                    }
-                }
-            }
 
             if (doc.Kind != "{8E7B96A8-E33D-11D0-A6D5-00C04FB67F6A}")
                 return;
@@ -259,15 +238,6 @@ namespace TextTools
             {
                 get { return Config.RWS; }
                 set { Config.RWS = value; }
-            }
-
-            [Category("文本工具")]
-            [DisplayName("重置VAX插件试用")]
-            [Description("自动重置VAX插件试用，推荐购买正版VAX")]
-            public bool OptionResetVA
-            {
-                get { return Config.Reset; }
-                set { Config.Reset = value; }
             }
 
             [Category("文本工具")]
