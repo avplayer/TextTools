@@ -9,13 +9,13 @@ namespace TextTools
         // String literal and c++ raw string state machine.
         public enum StringliteralState
         {
-            Nono,
+            None,
             Quote,
         };
 
         public enum RawStringState
         {
-            Nono,
+            None,
             Prefix,
             RawString,
             Suffix,
@@ -35,144 +35,161 @@ namespace TextTools
                 {
                     var snap = edit.Snapshot;
 
-                    StringliteralState stringState = StringliteralState.Nono;
-                    RawStringState rawString = RawStringState.Nono;
+                    StringliteralState stringState = StringliteralState.None;
+                    RawStringState rawState = RawStringState.None;
 
                     string prefix = "";
                     string suffix = "";
 
                     const char zeroChar = '\0';
                     char backChar = zeroChar;
-                    int spaceStart = 0;
+                    int numSpace = 0;
                     bool verbatimString = false;
+                    bool comment = false;
+                    bool multilineComment = false;
 
                     foreach (var line in snap.Lines)
                     {
                         string text = line.GetText();
+                        comment = false;
+
                         foreach (char c in text)
                         {
-                            if (rawString != RawStringState.Nono)
+                            switch (rawState)
                             {
-                                switch (rawString)
-                                {
-                                    case RawStringState.Prefix:
-                                        if (c == '(')
-                                        {
-                                            rawString = RawStringState.RawString;
-                                            continue;
-                                        }
-                                        else
-                                        {
-                                            prefix = prefix + c;
-                                            continue;
-                                        }
-                                    case RawStringState.RawString:
-                                        if (c != ')')
-                                            continue;
-                                        else
-                                            rawString = RawStringState.Suffix;
-                                        continue;
-                                    case RawStringState.Suffix:
-                                        if (c != '\"')
-                                            suffix = suffix + c;
-                                        else if (suffix == prefix)
-                                        {
-                                            rawString = RawStringState.Nono;
-                                            prefix = suffix = "";
-                                            spaceStart = 0;
-                                        }
-                                        else
-                                        {
-                                            suffix = "";
-                                            rawString = RawStringState.RawString;
-                                        }
-                                        continue;
-                                }
-                            }
-
-                            // Verbatim string skip
-                            if (verbatimString)
-                            {
-                                if (c == '\"')
-                                {
-                                    backChar = zeroChar;
-                                    spaceStart = 0;
-                                    verbatimString = false;
-                                }
-
-                                continue;
-                            }
-
-                            // Skip all \" substring
-                            if (backChar == '\\' && c == '\"')
-                            {
-                                backChar = c;
-                                if (spaceStart != 0)
-                                    spaceStart = 0;
-                                continue;
-                            }
-                            // Skip \\ substring
-                            else if (backChar == '\\' && c == '\\')
-                            {
-                                backChar = zeroChar;
-                                if (spaceStart != 0)
-                                    spaceStart = 0;
-                                continue;
-                            }
-
-                            // C++ raw string literal
-                            if (backChar == 'R' && c == '\"')
-                            {
-                                rawString = RawStringState.Prefix;
-                                continue;
-                            }
-
-                            // C# verbatim string
-                            if (csharp && backChar == '@' && c == '\"')
-                            {
-                                verbatimString = true;
-                                continue;
-                            }
-
-                            backChar = c;
-
-                            // String literal
-                            switch (stringState)
-                            {
-                                case StringliteralState.Nono:
-                                    if (c == '\"')
+                                case RawStringState.None:
                                     {
-                                        stringState = StringliteralState.Quote;
-                                        if (spaceStart != 0)
-                                            spaceStart = 0;
-                                        continue;
+                                        if (comment)
+                                        {
+                                            continue;
+                                        }
+
+                                        if (verbatimString)
+                                        {
+                                            if (c == '\"')
+                                            {
+                                                backChar = zeroChar;
+                                                numSpace = 0;
+                                                verbatimString = false;
+                                            }
+
+                                            continue;
+                                        }
+
+                                        // Skip all \" substring
+                                        if (backChar == '\\' && c == '\"')
+                                        {
+                                            backChar = c;
+                                            if (numSpace != 0)
+                                                numSpace = 0;
+                                            continue;
+                                        }
+                                        // Skip \\ substring
+                                        else if (backChar == '\\' && c == '\\')
+                                        {
+                                            backChar = zeroChar;
+                                            if (numSpace != 0)
+                                                numSpace = 0;
+                                            continue;
+                                        }
+                                        // Skip comments
+                                        else if (backChar == '/' && c == '*')
+                                        {
+                                            if (stringState == StringliteralState.None)
+                                                multilineComment = true;
+                                        }
+                                        else if (backChar == '*' && c == '/')
+                                        {
+                                            if (multilineComment)
+                                            {
+                                                multilineComment = false;
+                                                continue;
+                                            }
+                                        }
+
+                                        if (multilineComment)
+                                            continue;
+
+                                        if (backChar == '/' && c == '/')
+                                        {
+                                            comment = true;
+                                        }
+
+                                        // C++ raw string literal
+                                        if (backChar == 'R' && c == '\"')
+                                        {
+                                            rawState = RawStringState.Prefix;
+                                            continue;
+                                        }
+
+                                        // C# verbatim string
+                                        if (csharp && backChar == '@' && c == '\"')
+                                        {
+                                            verbatimString = true;
+                                            continue;
+                                        }
+
+                                        backChar = c;
+
+                                        // String literal
+                                        switch (stringState)
+                                        {
+                                            case StringliteralState.None:
+                                                if (c == '\"')
+                                                {
+                                                    stringState = StringliteralState.Quote;
+                                                    if (numSpace != 0)
+                                                        numSpace = 0;
+                                                    continue;
+                                                }
+                                                break;
+                                            case StringliteralState.Quote:
+                                                if (c == '\"')
+                                                    stringState = StringliteralState.None;
+                                                continue;
+                                        }
+
+                                        if (Char.IsWhiteSpace(c))
+                                            numSpace++;
+                                        else
+                                            numSpace = 0;
                                     }
                                     break;
-                                case StringliteralState.Quote:
-                                    if (c == '\"')
-                                        stringState = StringliteralState.Nono;
+                                case RawStringState.Prefix:
+                                    if (c == '(')
+                                        rawState = RawStringState.RawString;
+                                    else
+                                        prefix = prefix + c;
+                                    continue;
+                                case RawStringState.RawString:
+                                    if (c == ')')
+                                        rawState = RawStringState.Suffix;
+                                    continue;
+                                case RawStringState.Suffix:
+                                    if (c != '\"')
+                                        suffix = suffix + c;
+                                    else if (suffix == prefix)
+                                    {
+                                        rawState = RawStringState.None;
+                                        prefix = suffix = "";
+                                        numSpace = 0;
+                                    }
+                                    else
+                                    {
+                                        suffix = "";
+                                        rawState = RawStringState.RawString;
+                                    }
                                     continue;
                             }
-
-                            if (Char.IsWhiteSpace(c))
-                            {
-                                spaceStart++;
-                                continue;
-                            }
-                            else
-                            {
-                                spaceStart = 0;
-                                continue;
-                            }
                         }
 
-                        if (spaceStart != 0)
+                        if (numSpace != 0)
                         {
-                            int start = line.Start.Position + text.Length - spaceStart;
-                            edit.Delete(start, spaceStart);
+                            int start = line.Start.Position + text.Length - numSpace;
+                            edit.Delete(start, numSpace);
                         }
 
-                        spaceStart = 0;
+                        numSpace = 0;
                     }
 
                     edit.Apply();
