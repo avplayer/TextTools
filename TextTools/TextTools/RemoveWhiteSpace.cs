@@ -108,7 +108,10 @@ namespace TextTools
                                         }
 
                                         if (multilineComment)
+                                        {
+                                            backChar = c;
                                             continue;
+                                        }
 
                                         if (backChar == '/' && c == '/')
                                         {
