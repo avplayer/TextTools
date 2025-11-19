@@ -8,15 +8,15 @@ Convert encoding after save. Convert line ending after save. Remove trailing whi
         <MoreInfo>https://github.com/avplayer/convert-line-ending</MoreInfo>
     </Metadata>
     <Installation InstalledByMsi="false">
-        <InstallationTarget Version="[16.0,18.0)" Id="Microsoft.VisualStudio.Community">
+        <InstallationTarget Version="[16.0,19.0)" Id="Microsoft.VisualStudio.Community">
             <ProductArchitecture>amd64</ProductArchitecture>
         </InstallationTarget>
-        <InstallationTarget Version="[16.0,18.0)" Id="Microsoft.VisualStudio.Enterprise">
+        <InstallationTarget Version="[16.0,19.0)" Id="Microsoft.VisualStudio.Enterprise">
             <ProductArchitecture>amd64</ProductArchitecture>
-	</InstallationTarget>
-        <InstallationTarget Version="[16.0,18.0)" Id="Microsoft.VisualStudio.Pro">
+        </InstallationTarget>
+        <InstallationTarget Version="[16.0,19.0)" Id="Microsoft.VisualStudio.Pro">
             <ProductArchitecture>amd64</ProductArchitecture>
-	</InstallationTarget>
+        </InstallationTarget>
     </Installation>
     <Dependencies>
     </Dependencies>
@@ -26,6 +26,6 @@ Convert encoding after save. Convert line ending after save. Remove trailing whi
         <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
     </Assets>
     <Prerequisites>
-        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[16.0.28315.86,18.0)" DisplayName="Visual Studio 核心编辑器" />
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[16.0.28315.86,19.0)" DisplayName="Visual Studio 核心编辑器" />
     </Prerequisites>
 </PackageManifest>
