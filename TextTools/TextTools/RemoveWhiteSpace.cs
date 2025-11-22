@@ -115,7 +115,8 @@ namespace TextTools
 
                                         if (backChar == '/' && c == '/')
                                         {
-                                            comment = true;
+                                            if (stringState == StringliteralState.None)
+                                                comment = true;
                                         }
 
                                         // C++ raw string literal
